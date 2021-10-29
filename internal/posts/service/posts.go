@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -50,8 +49,10 @@ func (s *PostsService) Get(ctx context.Context, postsId int64) (*PostsData, erro
 		return nil, errInvalidPostsId(postsId)
 	}
 
+	var postData PostsData
 	key := fmt.Sprintf("posts:%d:data", postsId)
-	result, err := s.rdb.Get(ctx, key).Result()
+	err := s.rdb.HGetAll(ctx, key).Scan(&postData)
+	//result, err := s.rdb.Get(ctx, key).Result()
 	if err == redis.Nil {
 		fmt.Printf("get posts key not found:%s", key)
 		return nil, nil
@@ -59,13 +60,13 @@ func (s *PostsService) Get(ctx context.Context, postsId int64) (*PostsData, erro
 		return nil, err
 	}
 
-	postData := new(PostsData)
-	err = json.Unmarshal([]byte(result), &postData)
-	if err != nil {
-		return nil, err
-	}
+	//postData := new(PostsData)
+	//err = json.Unmarshal([]byte(result), &postData)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	return postData, nil
+	return &postData, nil
 }
 
 // Save 保存
@@ -85,13 +86,15 @@ func (s *PostsService) Save(ctx context.Context, params *SaveParams) (int64, err
 		postsData.Id = postsId
 	}
 
-	postBytes, err := json.Marshal(postsData)
-	if err != nil {
-		return 0, err
-	}
+	//postBytes, err := json.Marshal(postsData)
+	//if err != nil {
+	//	return 0, err
+	//}
 
 	key := fmt.Sprintf("posts:%d:data", postsData.Id)
-	err = s.rdb.Set(ctx, key, string(postBytes), 0).Err()
+	values := postsData.ToMap()
+	err := s.rdb.HMSet(ctx, key, values).Err()
+	//err = s.rdb.Set(ctx, key, string(postBytes), 0).Err()
 	if err != nil {
 		return 0, err
 	}

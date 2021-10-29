@@ -19,7 +19,7 @@ func TestPostsService_IncrView(t *testing.T) {
 
 // 测试获取文章数据
 func TestPostsService_Get(t *testing.T) {
-	postsId := int64(3)
+	postsId := int64(9)
 	ctx := context.Background()
 	postsService := NewPostsService()
 	postsData, err := postsService.Get(ctx, postsId)
@@ -27,6 +27,23 @@ func TestPostsService_Get(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("got postsData:%+v", postsData)
+}
+
+// 测试修改文章
+func TestPostsService_SaveUpdate(t *testing.T) {
+	params := new(SaveParams)
+	params.Id = 9
+	params.Content = "修改后的内容"
+	ctx := context.Background()
+	postsService := NewPostsService()
+	postsId, err := postsService.Save(ctx, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if postsId <= 0 {
+		t.Fatal("fail: posts create")
+	}
+	t.Logf("posts update success postsId:%d", postsId)
 }
 
 // 测试创建新的文章
