@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+// 测试获取文章列表
+func TestPostsService_List(t *testing.T) {
+	params := new(ListParams)
+	params.PageIndex = int64(2)
+	params.PageSize = int64(1)
+	ctx := context.Background()
+	postsService := NewPostsService()
+	postsList, err := postsService.List(ctx, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(postsList) == 0 {
+		t.Logf("postsList is empty")
+	}
+	for _, postsItem := range postsList {
+		t.Logf("postsItem: %+v", postsItem)
+	}
+}
+
 // 测试获取并递增文章的访问数量
 func TestPostsService_IncrView(t *testing.T) {
 	postsId := int64(3)

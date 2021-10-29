@@ -28,3 +28,8 @@ type SaveParams struct {
 	Content string
 	Author  string
 }
+
+type ListParams struct {
+	PageIndex int64
+	PageSize int64
+}

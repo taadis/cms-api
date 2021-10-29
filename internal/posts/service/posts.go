@@ -19,6 +19,8 @@ type PostsServicer interface {
 	Save(ctx context.Context, params *SaveParams) (int64, error)
 	Get(ctx context.Context, postsId int64) (*PostsData, error)
 	IncrView(ctx context.Context, postsId int64) (int64, error)
+	List(ctx context.Context, params *ListParams) ([]*PostsData, error)
+	SaveIdToList(ctx context.Context, postsId int64) error
 }
 
 type PostsService struct {
@@ -29,6 +31,39 @@ func NewPostsService() PostsServicer {
 	s := new(PostsService)
 	s.rdb = getRdb()
 	return s
+}
+
+// SaveIdToList 保存文章id到列表
+func (s *PostsService) SaveIdToList(ctx context.Context, postsId int64) error {
+	key := fmt.Sprintf("posts:list")
+	err := s.rdb.LPush(ctx, key, postsId).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// List 获取文章列表
+func (s *PostsService) List(ctx context.Context, params *ListParams) ([]*PostsData, error) {
+	key := fmt.Sprintf("posts:list")
+	start := (params.PageIndex - 1) * params.PageSize
+	stop := params.PageIndex*params.PageSize - 1
+	postsIds := make([]int64, 0)
+	err := s.rdb.LRange(ctx, key, start, stop).ScanSlice(&postsIds)
+	if err != nil {
+		return nil, err
+	}
+
+	postsList := make([]*PostsData, 0)
+	for _, postsId := range postsIds {
+		postsItem, err := s.Get(ctx, postsId)
+		if err != nil {
+			return nil, err
+		}
+
+		postsList = append(postsList, postsItem)
+	}
+	return postsList, nil
 }
 
 // IncrView 获取并递增文章的访问数量
@@ -84,6 +119,11 @@ func (s *PostsService) Save(ctx context.Context, params *SaveParams) (int64, err
 			return 0, err
 		}
 		postsData.Id = postsId
+
+		err = s.SaveIdToList(ctx, postsId)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	//postBytes, err := json.Marshal(postsData)
