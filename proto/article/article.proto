@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package article;
+
+import "google/api/annotations.proto";
+
+service Article {
+  rpc Save (SaveRequest) returns (SaveResponse) {
+    option (google.api.http) = {
+      post: "/cms/article/save"
+      body: "*"
+    };
+  }
+}
+
+message SaveRequest {
+  int64 id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message SaveResponse {
+
+}
